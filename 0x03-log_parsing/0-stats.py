@@ -2,7 +2,7 @@
 import sys
 import signal
 
-# Initialize tracking variables
+# Initialize counters for file size and status codes
 total_file_size = 0
 status_counts = {"200": 0, "301": 0, "400": 0, "401": 0, "403": 0, "404": 0, "405": 0, "500": 0}
 line_count = 0
@@ -15,33 +15,37 @@ def print_metrics():
             print(f"{code}: {status_counts[code]}")
 
 def parse_log_line(line):
-    """Parse a single log line and update the metrics if the format matches."""
+    """Parse a single log line, update the metrics if format matches, and handle errors."""
     global total_file_size
     try:
+        # Split log line by whitespace and confirm it has the expected length
         parts = line.split()
-        # Ensure the log format has a file size and status code as the last two parts
+        if len(parts) < 2:
+            return
+        
+        # Extract status code and file size (last two elements)
         status_code = parts[-2]
         file_size = int(parts[-1])
         
-        # Update total file size
+        # Increment the total file size
         total_file_size += file_size
         
-        # Update count for valid status codes
+        # Update status code count if the code is valid
         if status_code in status_counts:
             status_counts[status_code] += 1
     except (IndexError, ValueError):
-        # Ignore lines that don't match expected format or have invalid data
+        # Skip the line if format is invalid
         pass
 
 def signal_handler(sig, frame):
-    """Handle keyboard interrupt to print metrics before exiting."""
+    """Handle keyboard interruption and print metrics before exiting."""
     print_metrics()
     sys.exit(0)
 
-# Register signal handler for keyboard interruption (CTRL + C)
+# Register signal handler for keyboard interrupt (CTRL+C)
 signal.signal(signal.SIGINT, signal_handler)
 
-# Read and process each line from standard input
+# Read lines from standard input
 try:
     for line in sys.stdin:
         parse_log_line(line.strip())
@@ -51,9 +55,10 @@ try:
         if line_count % 10 == 0:
             print_metrics()
 except KeyboardInterrupt:
+    # Print metrics on keyboard interrupt
     print_metrics()
     sys.exit(0)
 
-# Print final metrics when the input stream ends
+# Print final metrics at the end of input
 print_metrics()
 
