@@ -1,29 +1,24 @@
 def validUTF8(data):
-    # Number of bytes left to check for a character
     num_bytes = 0
-
-    # Masks to check leading bits of each byte
-    mask1 = 1 << 7  # 10000000
-    mask2 = 1 << 6  # 01000000
-
+    
     for byte in data:
-        mask = 1 << 7
+        # Mask to get the last 8 bits, as we're only interested in 8-bit representation.
+        byte = byte & 0xFF
+        
         if num_bytes == 0:
-            # Determine how many bytes are in this character
-            while byte & mask:
-                num_bytes += 1
-                mask >>= 1
-            
-            if num_bytes == 0:
-                continue
-            
-            if num_bytes == 1 or num_bytes > 4:
+            # Determine how many bytes the character has
+            if (byte >> 5) == 0b110:
+                num_bytes = 1
+            elif (byte >> 4) == 0b1110:
+                num_bytes = 2
+            elif (byte >> 3) == 0b11110:
+                num_bytes = 3
+            elif (byte >> 7):
                 return False
         else:
-            # Check that the byte starts with '10'
-            if not (byte & mask1 and not (byte & mask2)):
+            # Check if the next byte is of form '10xxxxxx'
+            if (byte >> 6) != 0b10:
                 return False
-        
-        num_bytes -= 1
-    
+            num_bytes -= 1
+
     return num_bytes == 0
