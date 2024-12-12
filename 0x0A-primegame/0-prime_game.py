@@ -1,37 +1,59 @@
 #!/usr/bin/python3
+"""
+Prime Game module.
+Determines the winner of a prime number picking game.
+"""
+
+def is_prime(num):
+    """Checks if a number is prime."""
+    if num < 2:
+        return False
+    for i in range(2, int(num**0.5) + 1):
+        if num % i == 0:
+            return False
+    return True
+
+def prime_count(n):
+    """Counts the number of primes up to n."""
+    primes = [True] * (n + 1)
+    primes[0], primes[1] = False, False
+    for i in range(2, int(n**0.5) + 1):
+        if primes[i]:
+            for j in range(i * i, n + 1, i):
+                primes[j] = False
+    return sum(primes)
+
 def isWinner(x, nums):
-    """Determine the winner of the Prime Game."""
+    """
+    Determines the winner of the game.
+
+    Args:
+        x (int): Number of rounds.
+        nums (list): List of n values for each round.
+
+    Returns:
+        str or None: Name of the player with the most wins or None if tied.
+    """
     if not nums or x < 1:
         return None
 
-    max_n = max(nums)
-    # Step 1: Precompute primes using the Sieve of Eratosthenes
-    sieve = [True] * (max_n + 1)
-    sieve[0] = sieve[1] = False  # 0 and 1 are not primes
-    for i in range(2, int(max_n ** 0.5) + 1):
-        if sieve[i]:
-            for j in range(i * i, max_n + 1, i):
-                sieve[j] = False
-
-    # Precompute cumulative prime counts up to each index
-    prime_counts = [0] * (max_n + 1)
-    for i in range(1, max_n + 1):
-        prime_counts[i] = prime_counts[i - 1] + (1 if sieve[i] else 0)
-
-    # Step 2: Determine the winner for each round
     maria_wins = 0
     ben_wins = 0
-    for n in nums:
-        # Total primes up to n determines the number of moves
-        moves = prime_counts[n]
-        if moves % 2 == 0:
-            ben_wins += 1  # Ben wins if the number of moves is even
-        else:
-            maria_wins += 1  # Maria wins if the number of moves is odd
 
-    # Step 3: Determine overall winner
+    max_num = max(nums)
+    prime_counts = [0] * (max_num + 1)
+    for i in range(1, max_num + 1):
+        prime_counts[i] = prime_counts[i - 1] + (1 if is_prime(i) else 0)
+
+    for n in nums:
+        if prime_counts[n] % 2 == 0:
+            ben_wins += 1
+        else:
+            maria_wins += 1
+
     if maria_wins > ben_wins:
         return "Maria"
     elif ben_wins > maria_wins:
         return "Ben"
-    return None
+    else:
+        return None
