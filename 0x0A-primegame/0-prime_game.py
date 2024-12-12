@@ -14,24 +14,38 @@ def isWinner(x, nums):
             for j in range(i * i, max_n + 1, i):
                 sieve[j] = False
 
-    # Precompute the number of primes up to each index
-    prime_count = [0] * (max_n + 1)
-    for i in range(1, max_n + 1):
-        prime_count[i] = prime_count[i - 1] + (1 if sieve[i] else 0)
+    # Precompute primes
+    primes = [i for i in range(max_n + 1) if sieve[i]]
 
     maria_wins = 0
     ben_wins = 0
 
-    # Simulate each round
     for n in nums:
-        if prime_count[n] % 2 == 0:
-            ben_wins += 1
-        else:
-            maria_wins += 1
+        # Simulate the game for the current `n`
+        moves = set(range(1, n + 1))
+        turn = 0  # Maria starts
 
+        while True:
+            # Find the smallest prime in the remaining numbers
+            valid_prime = next((p for p in primes if p in moves), None)
+            if valid_prime is None:
+                # No moves left, current player loses
+                if turn % 2 == 0:  # Maria's turn
+                    ben_wins += 1
+                else:  # Ben's turn
+                    maria_wins += 1
+                break
+
+            # Remove the prime and its multiples
+            multiples = set(range(valid_prime, n + 1, valid_prime))
+            moves -= multiples
+
+            # Switch turns
+            turn += 1
+
+    # Determine the overall winner
     if maria_wins > ben_wins:
         return "Maria"
     elif ben_wins > maria_wins:
         return "Ben"
-    else:
-        return None
+    return None
